@@ -1,0 +1,103 @@
+syntax = "proto3";
+package core.v1;
+
+// import "google/api/annotations.proto";
+// import "google/protobuf/field_mask.proto";
+// import "validate/validate.proto";
+
+option go_package = "github.com/tachunwu/distpebble/pkg/proto/core/v1";
+
+service SequencerService {
+    rpc Txn(TxnRequest) returns (TxnResponse) {}
+}
+
+service LookupService {
+    rpc LookupMaster(LookupMasterRequest) returns (LookupMasterResponse) {}
+}
+
+message TxnRequest {
+    Txn txn = 1;
+}
+
+message TxnResponse {
+
+}
+
+message Txn {
+    // Global order
+    uint64 txn_id = 1;
+    TxnType txn_type = 2;
+
+    // Key sets
+    repeated KeyEntry read_set = 20;
+    repeated KeyEntry write_set = 21;
+    repeated KeyEntry read_write_set = 22;
+
+    // Reader and writer
+    repeated uint64 readers = 31;
+    repeated uint64 writers = 32;
+
+}
+
+enum TxnType {
+    UNKNOWN = 0;
+    SINGLE_HOME = 1;
+    MULTI_HOME_OR_LOCK_ONLY = 2;
+}
+
+// Basic statement
+message Get {
+    KeyEntry key = 1;
+}
+
+message Set {
+    KeyEntry key = 1;
+    bytes valie = 2;
+}
+
+message Delete {
+    KeyEntry key = 1;
+}
+
+message Scan {
+    KeyEntry start_key = 1;
+    KeyEntry end_key = 2;
+}
+
+message KeyEntry {
+    bytes key = 1;
+    uint32 master = 2;
+    uint64 counter = 3;
+}
+
+message LookupMasterRequest {
+    uint64 txn_id = 1;
+    repeated bytes keys = 2;
+}
+
+message LookupMasterResponse {
+    uint64 txn_id = 1;
+    repeated KeyEntry key_entries = 2;
+}
+
+// Cluster manage
+message MachineInfo {
+    uint64 id = 1;
+    uint64 replica = 2;
+    string host = 3;
+    uint64 port = 4;
+}
+
+message ClusterInfo {
+    repeated MachineInfo machines = 1;
+}
+
+// Sequencer 
+message GetGlobalOrderedTxnRequest {
+    Txn txn = 1;
+}
+
+message GetGlobalOrderedTxnResponse {
+    Txn txn = 1;
+}
+
