@@ -6,33 +6,30 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"github.com/tachunwu/distpebble/pkg/config"
-	corev1 "github.com/tachunwu/distpebble/pkg/proto/core/v1"
+	pb "github.com/tachunwu/distpebble/pkg/proto/distpebble/v1"
 	"github.com/tachunwu/distpebble/pkg/sequencer"
 	"google.golang.org/grpc"
 )
 
 var (
 	port    = flag.String("port", "", "distpebble serve port")
-	nats    = flag.String("nats", "", "local nats port")
-	cluster = flag.String("cluster", "", "cluster port")
+	cluster = flag.String("cluster", "", "cluster ports")
 )
 
 func main() {
 	// Config
 	flag.Parse()
 	conf := config.NewDefaultConfig()
-	conf.ClusterAddr = strings.Split(*cluster, ",")
-	conf.SequencerAddr = *nats
+	conf.ClusterAddr = *cluster
 	grpcServer := grpc.NewServer()
 
 	// Regist sequencer
 	sequencer := sequencer.NewSequencer(conf)
 	sequencer.Start()
-	corev1.RegisterSequencerServiceServer(grpcServer, sequencer)
+	pb.RegisterSequencerServiceServer(grpcServer, sequencer)
 
 	// Start grpc server
 	l, err := net.Listen("tcp", "localhost:"+*port)

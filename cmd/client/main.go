@@ -6,7 +6,8 @@ import (
 	"log"
 	"time"
 
-	corev1 "github.com/tachunwu/distpebble/pkg/proto/core/v1"
+	pb "github.com/tachunwu/distpebble/pkg/proto/distpebble/v1"
+	"github.com/tachunwu/distpebble/pkg/utli/throttle"
 	"google.golang.org/grpc"
 )
 
@@ -19,52 +20,74 @@ func main() {
 	defer connP1.Close()
 	defer connP2.Close()
 	defer connP3.Close()
-	c1 := corev1.NewSequencerServiceClient(connP1)
-	// c2 := corev1.NewSequencerServiceClient(connP2)
-	// c3 := corev1.NewSequencerServiceClient(connP3)
+	c1 := pb.NewSequencerServiceClient(connP1)
+	c2 := pb.NewSequencerServiceClient(connP2)
+	c3 := pb.NewSequencerServiceClient(connP3)
+
 	go func() {
+		th := throttle.NewThrottle(128)
+
 		for i := 0; i < 333333; i++ {
 			fmt.Println(i)
-			go func() {
-				ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-				_, err := c1.Txn(ctx, &corev1.TxnRequest{
-					Txn: &corev1.Txn{
+			th.Do()
+			go func(th *throttle.Throttle) {
+				defer th.Done(nil)
+				ctx, _ := context.WithTimeout(context.Background(), 100*time.Second)
+				_, err := c1.CreateTxn(ctx, &pb.CreateTxnRequest{
+					Txn: &pb.Txn{
 						TxnId: uint64(i),
 					},
 				})
 				if err != nil {
 					log.Println(err)
 				}
-			}()
-
+			}(th)
 		}
+
 	}()
 
-	// go func() {
-	// 	for i := 333334; i < 666666; i++ {
-	// 		ctx, _ := context.WithTimeout(context.Background(), time.Second)
-	// 		_, err := c2.Txn(ctx, &corev1.TxnRequest{
-	// 			Txn: &corev1.Txn{
-	// 				TxnId: uint64(i),
-	// 			},
-	// 		})
-	// 		if err != nil {
-	// 			log.Println(err)
-	// 		}
-	// 	}
-	// }()
-	// go func() {
-	// 	for i := 666667; i < 1000000; i++ {
-	// 		ctx, _ := context.WithTimeout(context.Background(), time.Second)
-	// 		_, err := c3.Txn(ctx, &corev1.TxnRequest{
-	// 			Txn: &corev1.Txn{
-	// 				TxnId: uint64(i),
-	// 			},
-	// 		})
-	// 		if err != nil {
-	// 			log.Println(err)
-	// 		}
-	// 	}
-	// }()
+	go func() {
+		th := throttle.NewThrottle(128)
+
+		for i := 333334; i < 666666; i++ {
+			fmt.Println(i)
+			th.Do()
+			go func(th *throttle.Throttle) {
+				defer th.Done(nil)
+				ctx, _ := context.WithTimeout(context.Background(), time.Second)
+				_, err := c2.CreateTxn(ctx, &pb.CreateTxnRequest{
+					Txn: &pb.Txn{
+						TxnId: uint64(i),
+					},
+				})
+				if err != nil {
+					log.Println(err)
+				}
+
+			}(th)
+		}
+
+	}()
+	go func() {
+		th := throttle.NewThrottle(128)
+
+		for i := 666667; i < 1000000; i++ {
+			fmt.Println(i)
+			th.Do()
+			go func(th *throttle.Throttle) {
+				defer th.Done(nil)
+				ctx, _ := context.WithTimeout(context.Background(), time.Second)
+				_, err := c3.CreateTxn(ctx, &pb.CreateTxnRequest{
+					Txn: &pb.Txn{
+						TxnId: uint64(i),
+					},
+				})
+				if err != nil {
+					log.Println(err)
+				}
+			}(th)
+		}
+
+	}()
 	time.Sleep(120 * time.Second)
 }

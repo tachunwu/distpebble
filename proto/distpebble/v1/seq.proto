@@ -1,0 +1,41 @@
+syntax = "proto3";
+package distpebble.v1;
+
+// import "google/api/annotations.proto";
+// import "google/protobuf/field_mask.proto";
+// import "validate/validate.proto";
+import "distpebble/v1/txn.proto";
+
+option go_package = "github.com/tachunwu/distpebble/pkg/proto/seq/v1";
+
+service SequencerService {
+    // Entry point
+    rpc CreateTxn(CreateTxnRequest) returns (CreateTxnResponse){}
+
+    // Sequencer interal use
+    rpc GetBatch(GetBatchRequest) returns (GetBatchResponse){}
+}
+
+
+message CreateTxnRequest {
+    Txn txn = 1;
+}
+
+message CreateTxnResponse {
+
+}
+
+message GetBatchRequest {}
+message GetBatchResponse {
+    repeated Txn txns = 1;
+}
+
+
+// Sequencer 
+message GetGlobalOrderedTxnRequest {
+    Txn txn = 1;
+}
+
+message GetGlobalOrderedTxnResponse {
+    Txn txn = 1;
+}

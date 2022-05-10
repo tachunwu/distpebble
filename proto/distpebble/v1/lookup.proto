@@ -1,0 +1,24 @@
+syntax = "proto3";
+package distpebble.v1;
+
+// import "google/api/annotations.proto";
+// import "google/protobuf/field_mask.proto";
+// import "validate/validate.proto";
+import "distpebble/v1/txn.proto";
+
+
+option go_package = "github.com/tachunwu/distpebble/pkg/proto/lookup/v1";
+
+service LookupService {
+    rpc LookupMaster(LookupMasterRequest) returns (LookupMasterResponse) {}
+}
+
+message LookupMasterRequest {
+    uint64 txn_id = 1;
+    repeated bytes keys = 2;
+}
+
+message LookupMasterResponse {
+    uint64 txn_id = 1;
+    repeated KeyEntry key_entries = 2;
+}

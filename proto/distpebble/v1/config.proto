@@ -1,0 +1,16 @@
+syntax = "proto3";
+package distpebble.v1;
+
+// Cluster manage
+message MachineInfo {
+    uint64 id = 1;
+    uint64 replica = 2;
+    string host = 3;
+    uint64 port = 4;
+}
+
+message ClusterInfo {
+    repeated MachineInfo machines = 1;
+}
+
+
